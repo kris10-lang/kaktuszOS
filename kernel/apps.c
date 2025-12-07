@@ -1,0 +1,5 @@
+#include "logo/logo.c"
+#include "calc/calc.c"
+#include "read/read.c"
+#include "dir/dir.c"
+#include "make/make.c"
