@@ -62,7 +62,7 @@ void calc(void) {
                 if (knum2 != 0) {
                     eredmeny = knum1 / knum2;
                 } else {
-                    kprint("DIV BY ZERO", 0x0C00, vga+801);
+                    kprint("DIV BY ZERO", 0x4F00, vga+801);
                     kpause();
                     kpause();
                     continue;
@@ -72,7 +72,7 @@ void calc(void) {
                 eredmeny = hatvany(knum1, knum2);
             }
             else {
-                kprint("OP ERROR", 0x0C00, vga+801);
+                kprint("OP ERROR", 0x4F00, vga+801);
                 kpause();
                 kpause();
                 continue; 
@@ -82,7 +82,7 @@ void calc(void) {
             kpause();
             kpause();
         } else {
-            kprint("Invalid input (0/1)", 0x0C00, vga+801);
+            kprint("Invalid input (0/1)", 0x4F00, vga+801);
             kpause();
             kpause();
         }

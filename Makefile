@@ -11,3 +11,7 @@ all:
 	sh/compile.sh
 	sh/install.sh
 	sh/test.sh
+git:
+	git add .
+	git commit -m "Update kaktuszOS code"
+	git push

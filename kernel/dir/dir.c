@@ -60,7 +60,7 @@ void dir(void) {
     // 2. Az összes Gyökérkönyvtári szektor átvizsgálása
     for (int i = 0; i < root_dir_sectors; i++) {
         if (read_sectors(LBA_RDIR + i, 1, root_dir_buffer) != 0) {
-            kprint("Hiba: Gyoker szektor olvasas!", 0x0C00, vga_cursor_pos);
+            kprint("Error when reading ::", 0x4F00, vga_cursor_pos);
             kpause();
             return;
         }
@@ -144,7 +144,7 @@ void dir(void) {
 
             // Lapozás
             if (vga_cursor_index >= 2000) { 
-                kprint("--- TOVABB (nyomj gombot) ---", 0x0E00, vga_cursor_pos);
+                kprint("--- CONTINUE (press button) ---", 0x0E00, vga_cursor_pos);
                 kpause();
                 kclearscreen();
                 vga_cursor_pos = (volatile unsigned short*)0xb8000;

@@ -1,8 +1,11 @@
 void make(void) {
     char content[512];
     char filename[13];
+
     kpause();
     kinput2(1547, filename, sizeof(filename));
+
+    // Ellenőrizzük, hogy a fájlnév nem üres-e
     int valid = 0;
     for (int i = 0; i < sizeof(filename); i++) {
         if (filename[i] == '\0') break;
@@ -12,21 +15,32 @@ void make(void) {
         }
     }
     if (!valid) {
-        kprint("Error: Filename cannot be empty!", 0x4F00, vga +1680+21);
+        kprint("Error: Filename cannot be empty!", 0x4F00, vga + 1680 + 21);
         kpause();
         return;
     }
 
+    // Ellenőrizzük, hogy a fájl már létezik-e
+    if (file_exists(filename)) {
+        kprint("Error: File already exists!", 0x4F00, vga + 1680 + 21);
+        kpause();
+        return;
+    }
+
+    // Ha minden OK, kérjük be a fájl tartalmát
     kclearscreen();
     kprint("+------------------------------------------------------------------------------+", 0x0F00, vga);
     kprint("|File content:                                                                 |", 0x0F00, vga + 80);
     kprint("+------------------------------------------------------------------------------+", 0x0F00, vga + 160);
     kpause();
     kinput(240, content, sizeof(content));
+
     // Fájl létrehozása
-    int result = create_file(filename, content,strlen(content));
+    int result = create_file(filename, content, strlen(content));
     if (result == 0) {
+        kprint("File created successfully!", 0x0200, vga + 240);
     } else {
-        kprint("File make failed!", 0x4F00, vga+240);
+        kprint("File make failed!", 0x4F00, vga + 240);
+        kpause();
     }
 }

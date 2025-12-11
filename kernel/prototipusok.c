@@ -29,3 +29,7 @@ int fat_create_file_entry(const char* filename, unsigned short start_cluster, un
 int create_file(const char* filename, const char* content, int len);
 void run_app(const char* filename);
 void run_assembly_code(void* app_address);
+int delete_file(const char* filename);
+int file_exists(const char* filename);
+int hex_char_to_int(char c);
+int hex_to_byte(const char* str);

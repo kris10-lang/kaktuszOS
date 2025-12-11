@@ -9,7 +9,7 @@ void read(void) {
 
     // Ha üres a név
     if (filename[0] == '\0') {
-        kprint("Error: Filename cannot be empty.", 0x0C00, vga + 1680+21);
+        kprint("Error: Filename cannot be empty.", 0x4F00, vga + 1680+21);
         kpause();
         return;
     }
@@ -26,8 +26,8 @@ void read(void) {
     if (size > 0) {
         kprint(file_content, 0x0700, vga + 240);
     } else {
-        kprint("Something went wrong", 0x0C00, vga+240);
-        kprint("File not found or read error.", 0x0C00, vga+320);
+        kprint("Something went wrong", 0x4F00, vga+240);
+        kprint("File not found or read error.", 0x4F00, vga+320);
     }
 
     kpause();

@@ -3,3 +3,8 @@
 #include "read/read.c"
 #include "dir/dir.c"
 #include "make/make.c"
+#include "del/del.c"
+#include "prog/prog.c"
+#include "edit/edit.c"
+#include "rename_copy/rename_copy.c"
+#include "help/help.c"

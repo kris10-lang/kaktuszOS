@@ -6,36 +6,52 @@
 #include "appprototipusok.c"
 //main
 void kmain(void) {
-    unsigned char snake_bin[] = {
- 0xb4, 0x4f, 0xb0, 0x41, 0x66, 0xa3, 0x00, 0x80, 0x0b, 0x00, 0xc3
-};
-create_file("SNAKE32.BIN",(const char*)snake_bin,15);
-
-        while (1) {
-            kinit_gui();
-            kprint("                                    ", 0x0F00, vga+1520+22);
-            kinput(1520 + 22,command,sizeof(command));
-            if (strcmp(command, "logo") == 0) {
-                logo();
-            }
-            if (strcmp(command, "calc") == 0) {
-                calc();
-            }
-            if (strcmp(command, "read") == 0) {
-                read();
-            }
-            if (strcmp(command, "dir") == 0) {
-                dir();
-            }
-            if (strcmp(command, "make") == 0) {
-                make();
-            }
-            if (strcmp(command, "run") == 0) {
-                run_app("SNAKE32.BIN");
-            }
-            kpause();
+    while (1) {
+        kinit_gui();
+        kprint("                                    ", 0x0F00, vga+1520+22);
+        kinput(1520 + 22,command,sizeof(command));
+        if (strcmp(command, "logo") == 0) {
+            logo();
         }
+        if (strcmp(command, "calc") == 0) {
+            calc();
+        }
+        if (strcmp(command, "read") == 0) {
+            read();
+        }
+        if (strcmp(command, "dir") == 0) {
+            dir();
+        }
+        if (strcmp(command, "make") == 0) {
+            make();
+        }
+        if (strcmp(command, "run") == 0) {
+            char filename[13];
+            kpause();
+            kinput2(1546, filename, sizeof(filename));
+            run_app(filename);
+        }
+        if (strcmp(command, "del") == 0) {
+            del();
+        }
+        if (strcmp(command, "prog") == 0) {
+            prog();
+        }
+        if (strcmp(command, "edit") == 0) {
+            edit();
+        }
+        if (strcmp(command, "copy") == 0) {
+            copy();
+        }
+        if (strcmp(command, "name") == 0) {
+            rename();
+        }
+        if (strcmp(command, "help") == 0) {
+            help();
+        }
+        kpause();
     }
+}
 //fügvények
 void kinit_gui(void) {
     kclearscreen();
@@ -59,8 +75,13 @@ void kinit_gui(void) {
     kwriteapp("read", app3[0], app3[1], app3[2],0x0F00);
     kwriteapp("dir ", app4[0], app4[1], app4[2],0x0F00);
     kwriteapp("make", app5[0], app5[1], app5[2],0x0F00);
-    kwriteapp("netw", app6[0], app6[1], app6[2],0x0F00);
-    kwriteapp("conf",app44[0],app44[1],app44[2],0x0F00);
+    kwriteapp("del ", app6[0], app6[1], app6[2],0x0F00);
+    kwriteapp("prog", app7[0], app7[1], app7[2],0x0F00);
+    kwriteapp("edit", app8[0], app8[1], app8[2],0x0F00);
+    kwriteapp("run ", app9[0], app9[1], app9[2],0x0F00);
+    kwriteapp("copy",app10[0],app10[1],app10[2],0x0F00);
+    kwriteapp("name",app11[0],app11[1],app11[2],0x0F00);
+    kwriteapp("help",app12[0],app12[1],app12[2],0x0F00);
 }
 void kclearscreen(void) {
     for (int i = 0; i < 80*25; i++) {
@@ -353,11 +374,11 @@ int read_sectors(unsigned int lba, unsigned char count, unsigned char* buffer) {
 }
 int fat_read_bpb(void) {
     if (read_sectors(FAT12_LBA_OFFSET, 1, (unsigned char*)&g_bpb) != 0) {
-        kprint("BPB reading problem!", 0x0C00, vga + 1680);
+        kprint("BPB reading problem!", 0x4F00, vga + 1680);
         return -1;
     }
     if (g_bpb.BPB_BytesPerSec != 512) {
-        kprint("BPB unallowed size!", 0x0C00, vga + 1680);
+        kprint("BPB unallowed size!", 0x4F00, vga + 1680);
         return -1;
     }
     return 0;
@@ -628,7 +649,8 @@ void run_app(const char* filename) {
     char temp_buffer[TEMP_BUFFER_SIZE]; 
     int file_size = read_file(filename, temp_buffer, TEMP_BUFFER_SIZE);
     if (file_size < 0) {
-        kprint("File not found or read error!", 0x0C00, vga);
+        kprint("File not found or read error!", 0x4F00, vga);
+        kpause();
         return;
     } 
     unsigned char* src = (unsigned char*)temp_buffer;
@@ -636,7 +658,8 @@ void run_app(const char* filename) {
     for (int i = 0; i < file_size; i++) {
         dest[i] = src[i];
     }
-    run_assembly_code(TARGET_LOAD_ADDR); 
+    run_assembly_code(TARGET_LOAD_ADDR);
+    kprint("PRESS ANY KEY TO RETURN",0x4F00,vga);
     kpause(); 
 }
 void run_assembly_code(void* app_address) {
@@ -654,5 +677,177 @@ void run_assembly_code(void* app_address) {
         : "a" (app_address) // Bemeneti operandus: 'a' (EAX) regiszterbe tölti az 'app_address' változót
         : "esi" // Clobbered list: ESI regiszter megváltozik (hogy a GCC tudja, ne használja)
     );
+}
+int delete_file(const char* filename) {
+    if (fat_read_bpb() != 0) return -1;
+
+    // FAT1 LBA: a BPB helye (FAT12_LBA_OFFSET) + a rezervált szektorok száma.
+    unsigned int LBA_FAT1 = FAT12_LBA_OFFSET + g_bpb.BPB_RsvdSecCnt;
+    unsigned int LBA_RDIR = LBA_FAT1 + (g_bpb.BPB_NumFATs * g_bpb.BPB_FATSz16);
+    int root_dir_sectors = (g_bpb.BPB_RootEntCnt * 32) / SECTOR_SIZE;
+
+    unsigned char root_buffer[SECTOR_SIZE];
+    DIR_Entry* entry;
+
+    // 1) Átalakítjuk a bemeneti fájlnevet 8.3 FAT formátumra (11 char, nagybetű, space-padded)
+    unsigned char fat_name[11];
+    for (int i = 0; i < 11; i++) fat_name[i] = ' ';
+    int idx = 0;
+    int part = 0; // 0 = name (max 8), 1 = ext (max 3)
+    for (int i = 0; filename[i] != '\0' && idx < 11; i++) {
+        char c = filename[i];
+        if (c == '.') { part = 1; idx = 8; continue; }
+        if (part == 0 && idx < 8) fat_name[idx++] = toupper(c);
+        else if (part == 1 && idx < 11) fat_name[idx++] = toupper(c);
+    }
+
+    // 2) Keressük a root könyvtárban
+    unsigned short start_cluster = 0;
+    int entry_sector = -1;
+    int entry_index = -1;
+    for (int s = 0; s < root_dir_sectors; s++) {
+        if (read_sectors(LBA_RDIR + s, 1, root_buffer) != 0) return -1;
+        for (int e = 0; e < SECTOR_SIZE / sizeof(DIR_Entry); e++) {
+            entry = (DIR_Entry*)&root_buffer[e * sizeof(DIR_Entry)];
+            unsigned char first = entry->DIR_Name[0];
+            if (first == 0x00 || first == 0xE5) continue; // üres vagy már törölt
+            // összehasonlítjuk a 11 byte-ot
+            int match = 1;
+            for (int k = 0; k < 11; k++) {
+                if (entry->DIR_Name[k] != fat_name[k]) { match = 0; break; }
+            }
+            if (match) {
+                start_cluster = entry->DIR_FstClus;
+                entry_sector = s;
+                entry_index = e;
+                goto found;
+            }
+        }
+    }
+    // nem talált
+    return -1;
+
+found:
+    // 3) Töröljük a root entry első byte-ját (0xE5)
+    if (read_sectors(LBA_RDIR + entry_sector, 1, root_buffer) != 0) return -1;
+    entry = (DIR_Entry*)&root_buffer[entry_index * sizeof(DIR_Entry)];
+    entry->DIR_Name[0] = 0xE5;
+    if (write_sectors(LBA_RDIR + entry_sector, 1, root_buffer) != 0) return -1;
+
+    // 4) Beolvassuk az egész FAT-ot (mindkét FAT-másolatot g_fat_table-be)
+    // g_fat_table mérete a változókban: 512 * 9, de használjuk BPB értékét
+    unsigned int fat_size_bytes = g_bpb.BPB_FATSz16 * SECTOR_SIZE;
+    if (fat_size_bytes > sizeof(g_fat_table)) {
+        // Ha a g_fat_table túl kicsi, itt visszaadunk hibát
+        return -1;
+    }
+    // FAT1 beolvasása
+    for (unsigned int sec = 0; sec < g_bpb.BPB_FATSz16; sec++) {
+        if (read_sectors(LBA_FAT1 + sec, 1, g_fat_table + sec * SECTOR_SIZE) != 0)
+            return -1;
+    }
+
+    // 5) Felszabadítjuk a klaszterláncot a g_fat_table-ben (12-bit entry-k)
+    unsigned short cur = start_cluster;
+    while (cur >= 2 && cur < 0xFF8) {
+        // FAT12 offset (12-bit): cluster + cluster/2
+        unsigned int offset = cur + (cur / 2);
+        unsigned int byte_index = offset; // offset bájtban
+        // Biztosítjuk, hogy a szükséges 2 bájt a bufferben legyen
+        if (byte_index + 1 >= fat_size_bytes) break;
+
+        // Olvassuk a 12-bit bejegyzést
+        unsigned short entry_val = g_fat_table[byte_index] | (g_fat_table[byte_index + 1] << 8);
+        unsigned short next;
+        if (cur & 1) {
+            next = entry_val >> 4;
+        } else {
+            next = entry_val & 0x0FFF;
+        }
+
+        // Töröljük (0x000) a bejegyzést
+        if (cur & 1) {
+            // páratlan klaszter -> a magas 12 bitet nullázzuk, alsó 4 bit megmarad
+            entry_val = entry_val & 0x000F;
+        } else {
+            // páros klaszter -> az alsó 12 bitet nullázzuk, felső 4 bit megmarad
+            entry_val = entry_val & 0xF000;
+        }
+
+        // Kiírjuk vissza a két bájtot
+        g_fat_table[byte_index] = entry_val & 0xFF;
+        g_fat_table[byte_index + 1] = (entry_val >> 8) & 0xFF;
+
+        cur = next;
+    }
+
+    // 6) Visszaírjuk a frissített FAT-ot mindkét FAT-másolatra
+    // FAT1
+    for (unsigned int sec = 0; sec < g_bpb.BPB_FATSz16; sec++) {
+        if (write_sectors(LBA_FAT1 + sec, 1, g_fat_table + sec * SECTOR_SIZE) != 0)
+            return -1;
+    }
+    // FAT2 (következő copy)
+    unsigned int LBA_FAT2 = LBA_FAT1 + g_bpb.BPB_FATSz16;
+    for (unsigned int sec = 0; sec < g_bpb.BPB_FATSz16; sec++) {
+        if (write_sectors(LBA_FAT2 + sec, 1, g_fat_table + sec * SECTOR_SIZE) != 0)
+            return -1;
+    }
+
+    return 0;
+}
+int file_exists(const char* filename) {
+    if (fat_read_bpb() != 0) return 0;
+
+    unsigned int LBA_FAT = FAT12_LBA_OFFSET + g_bpb.BPB_RsvdSecCnt;
+    unsigned int LBA_RDIR = LBA_FAT + (g_bpb.BPB_NumFATs * g_bpb.BPB_FATSz16);
+    int root_dir_sectors = (g_bpb.BPB_RootEntCnt * 32) / SECTOR_SIZE;
+
+    unsigned char root_dir_buffer[SECTOR_SIZE];
+    DIR_Entry* entry;
+
+    // FAT 8.3 formátumú név előállítása
+    unsigned char fat_name[11];
+    for (int i = 0; i < 11; i++) fat_name[i] = ' ';
+    int idx = 0, part = 0; // 0 = name, 1 = ext
+    for (int i = 0; filename[i] != '\0' && idx < 11; i++) {
+        char c = filename[i];
+        if (c == '.') { part = 1; idx = 8; continue; }
+        if (part == 0 && idx < 8) fat_name[idx++] = toupper(c);
+        else if (part == 1 && idx < 11) fat_name[idx++] = toupper(c);
+    }
+
+    for (int s = 0; s < root_dir_sectors; s++) {
+        if (read_sectors(LBA_RDIR + s, 1, root_dir_buffer) != 0) return 0;
+        for (int e = 0; e < SECTOR_SIZE / sizeof(DIR_Entry); e++) {
+            entry = (DIR_Entry*)&root_dir_buffer[e * sizeof(DIR_Entry)];
+            if (entry->DIR_Name[0] == 0x00 || entry->DIR_Name[0] == 0xE5) continue; // üres vagy törölt
+            int match = 1;
+            for (int k = 0; k < 11; k++) {
+                if (entry->DIR_Name[k] != fat_name[k]) {
+                    match = 0;
+                    break;
+                }
+            }
+            if (match) return 1; // Megtaláltuk!
+        }
+    }
+
+    return 0; // Nincs ilyen fájl
+}
+int hex_char_to_int(char c) {
+    if (c >= '0' && c <= '9') return c - '0';
+    if (c >= 'a' && c <= 'f') return c - 'a' + 10;
+    if (c >= 'A' && c <= 'F') return c - 'A' + 10;
+    return -1; // hibás karakter
+}
+
+// Hex stringből bájtot csinál (2 char)
+// visszaad -1 hibára
+int hex_to_byte(const char* str) {
+    int hi = hex_char_to_int(str[0]);
+    int lo = hex_char_to_int(str[1]);
+    if (hi < 0 || lo < 0) return -1;
+    return (hi << 4) | lo;
 }
 #include "apps.c"
