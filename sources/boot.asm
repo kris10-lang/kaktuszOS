@@ -8,7 +8,7 @@ start:
     mov ss, ax
     mov sp, 0x7C00
 
-    mov ax, 0x0003
+    mov ax, 0x0000
     int 0x10
 
     mov [BOOT_DRIVE], dl

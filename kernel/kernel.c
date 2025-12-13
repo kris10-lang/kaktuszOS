@@ -8,8 +8,8 @@
 void kmain(void) {
     while (1) {
         kinit_gui();
-        kprint("                                    ", 0x0F00, vga+1520+22);
-        kinput(1520 + 22,command,sizeof(command));
+        kprint("                                    ", 0x0F00, vga+881);
+        kinput(881,command,sizeof(command));
         if (strcmp(command, "logo") == 0) {
             logo();
         }
@@ -28,7 +28,7 @@ void kmain(void) {
         if (strcmp(command, "run") == 0) {
             char filename[13];
             kpause();
-            kinput2(1546, filename, sizeof(filename));
+            kinput2(885, filename, sizeof(filename));
             run_app(filename);
         }
         if (strcmp(command, "del") == 0) {
@@ -55,21 +55,54 @@ void kmain(void) {
 //fügvények
 void kinit_gui(void) {
     kclearscreen();
-    kprint("+--+--+--+--+--+--++--+--+--+--+--+--+", 0x0A00, vga+480+21);
-    kprint("|  |  |  |  |  |  ||  |  |  |  |  |  |", 0x0A00, vga+560+21);
-    kprint("|  |  |  |  |  |  ||  |  |  |  |  |  |", 0x0A00, vga+640+21);
-    kprint("+--+--+--+--+--+--++--+--+--+--+--+--+", 0x0A00, vga+720+21);
-    kprint("|  |  |  |  |  |  ||  |  |  |  |  |  |", 0x0A00, vga+800+21);
-    kprint("|  |  |  |  |  |  ||  |  |  |  |  |  |", 0x0A00, vga+880+21);
-    kprint("+--+--+--+--+--+--++--+--+--+--+--+--+", 0x0A00, vga+960+21);
-    kprint("|  |  |  |  |  |  ||  |  |  |  |  |  |", 0x0A00, vga+1040+21);
-    kprint("|  |  |  |  |  |  ||  |  |  |  |  |  |", 0x0A00, vga+1120+21);
-    kprint("+--+--+--+--+--+--++--+--+--+--+--+--+", 0x0A00, vga+1200+21);
-    kprint("|Welcome to |  |  ||  |  |  |  |  |  |", 0x0A00, vga+1280+21);
-    kprint("|kaktuszOS  |  |  ||  |  |  |  |  |  |", 0x0A00, vga+1360+21);
-    kprint("+--+--+--+--+--+--++--+--+--+--+--+--+", 0x0E00, vga+1440+21);
-    kprint("|                                    |", 0x0E00, vga+1520+21);
-    kprint("+------------------------------------+", 0x0E00, vga+1600+21);
+    int line = 0;
+    kprint("+--+--+--+--+--+--+--+--+--+--+--+--+--+", 0x0A00, vga+line);
+    line = line+40;
+    kprint("|  |  |  |  |  |  |  |  |  |  |  |  |  |", 0x0A00, vga+line);
+    line = line+40;
+    kprint("|  |  |  |  |  |  |  |  |  |  |  |  |  |", 0x0A00, vga+line);
+    line = line+40;
+    kprint("+--+--+--+--+--+--+--+--+--+--+--+--+--+", 0x0A00, vga+line);
+    line = line+40;
+    kprint("|  |  |  |  |  |  |  |  |  |  |  |  |  |", 0x0A00, vga+line);
+    line = line+40;
+    kprint("|  |  |  |  |  |  |  |  |  |  |  |  |  |", 0x0A00, vga+line);
+    line = line+40;
+    kprint("+--+--+--+--+--+--+--+--+--+--+--+--+--+", 0x0A00, vga+line);
+    line = line+40;
+    kprint("|  |  |  |  |  |  |  |  |  |  |  |  |  |", 0x0A00, vga+line);
+    line = line+40;
+    kprint("|  |  |  |  |  |  |  |  |  |  |  |  |  |", 0x0A00, vga+line);
+    line = line+40;
+    kprint("+--+--+--+--+--+--+--+--+--+--+--+--+--+", 0x0A00, vga+line);
+    line = line+40;
+    kprint("|  |  |  |  |  |  |  |  |  |  |  |  |  |", 0x0A00, vga+line);
+    line = line+40;
+    kprint("|  |  |  |  |  |  |  |  |  |  |  |  |  |", 0x0A00, vga+line);
+    line = line+40;
+    kprint("+--+--+--+--+--+--+--+--+--+--+--+--+--+", 0x0A00, vga+line);
+    line = line+40;
+    kprint("|  |  |  |  |  |  |  |  |  |  |  |  |  |", 0x0A00, vga+line);
+    line = line+40;
+    kprint("|  |  |  |  |  |  |  |  |  |  |  |  |  |", 0x0A00, vga+line);
+    line = line+40;
+    kprint("+--+--+--+--+--+--+--+--+--+--+--+--+--+", 0x0A00, vga+line);
+    line = line+40;
+    kprint("|  |  |  |  |  |  |  |  |  |  |  |  |  |", 0x0A00, vga+line);
+    line = line+40;
+    kprint("|  |  |  |  |  |  |  |  |  |  |  |  |  |", 0x0A00, vga+line);
+    line = line+40;
+    kprint("+--+--+--+--+--+--+--+--+--+--+--+--+--+", 0x0A00, vga+line);
+    line = line+40;
+    kprint("|Welcome to |  |  |  |  |  |  |  |  |  |", 0x0A00, vga+line);
+    line = line+40;
+    kprint("|kaktuszOS  |  |  |  |  |  |  |  |  |  |", 0x0A00, vga+line);
+    line = line+40;
+    kprint("+--+--+--+--+--+--+--+--+--+--+--+--+--+", 0x0E00, vga+line);
+    line = line+40;
+    kprint("|                                      |", 0x0E00, vga+line);
+    line = line+40;
+    kprint("+--------------------------------------+", 0x0E00, vga+line);
     kwriteapp("logo", app1[0], app1[1], app1[2],0x0F00);
     kwriteapp("calc", app2[0], app2[1], app2[2],0x0F00);
     kwriteapp("read", app3[0], app3[1], app3[2],0x0F00);
@@ -84,7 +117,7 @@ void kinit_gui(void) {
     kwriteapp("help",app12[0],app12[1],app12[2],0x0F00);
 }
 void kclearscreen(void) {
-    for (int i = 0; i < 80*25; i++) {
+    for (int i = 0; i < 40*25; i++) {
         vga[i] = (unsigned short)(' ' | 0x0F00);
     }
 }
@@ -123,13 +156,13 @@ void kprint_spaces(int count, unsigned short color, volatile unsigned short* sta
 }
 void kwriteapp(const char* text, int start_c, int sorindex1, int sorindex2, unsigned color) {
     int def_start_c = start_c;
-    vga[start_c+sorindex1*80] = (unsigned short)(text[0] | color);
+    vga[start_c+sorindex1*40] = (unsigned short)(text[0] | color);
     start_c++;
-    vga[start_c+sorindex1*80] = (unsigned short)(text[1] | color);
+    vga[start_c+sorindex1*40] = (unsigned short)(text[1] | color);
     start_c = def_start_c;
-    vga[start_c+sorindex2*80] = (unsigned short)(text[2] | color);
+    vga[start_c+sorindex2*40] = (unsigned short)(text[2] | color);
     start_c++;
-    vga[start_c+sorindex2*80] = (unsigned short)(text[3] | color);
+    vga[start_c+sorindex2*40] = (unsigned short)(text[3] | color);
 }
 unsigned char kscancode_to_ascii(unsigned char scancode) {
     switch (scancode) {
@@ -374,11 +407,11 @@ int read_sectors(unsigned int lba, unsigned char count, unsigned char* buffer) {
 }
 int fat_read_bpb(void) {
     if (read_sectors(FAT12_LBA_OFFSET, 1, (unsigned char*)&g_bpb) != 0) {
-        kprint("BPB reading problem!", 0x4F00, vga + 1680);
+        kprint("BPB reading problem!", 0x4F00, vga + 960);
         return -1;
     }
     if (g_bpb.BPB_BytesPerSec != 512) {
-        kprint("BPB unallowed size!", 0x4F00, vga + 1680);
+        kprint("BPB unallowed size!", 0x4F00, vga + 960);
         return -1;
     }
     return 0;
@@ -644,12 +677,11 @@ int create_file(const char* filename, const char* content, int len) {
     return 0;
 }
 void run_app(const char* filename) {
-    kclearscreen();
     #define TEMP_BUFFER_SIZE 4096 
     char temp_buffer[TEMP_BUFFER_SIZE]; 
     int file_size = read_file(filename, temp_buffer, TEMP_BUFFER_SIZE);
     if (file_size < 0) {
-        kprint("File not found or read error!", 0x4F00, vga);
+        kprint("File not found or read error!", 0x4F00, vga+960);
         kpause();
         return;
     } 
@@ -658,6 +690,7 @@ void run_app(const char* filename) {
     for (int i = 0; i < file_size; i++) {
         dest[i] = src[i];
     }
+    kclearscreen();
     run_assembly_code(TARGET_LOAD_ADDR);
     kprint("PRESS ANY KEY TO RETURN",0x4F00,vga);
     kpause(); 
