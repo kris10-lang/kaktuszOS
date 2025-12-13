@@ -102,6 +102,8 @@ void kinit_gui(void) {
     line = line+40;
     kprint("|                                      |", 0x0E00, vga+line);
     line = line+40;
+    kprint("|                                      |", 0x0E00, vga+line);
+    line = line+40;
     kprint("+--------------------------------------+", 0x0E00, vga+line);
     kwriteapp("logo", app1[0], app1[1], app1[2],0x0F00);
     kwriteapp("calc", app2[0], app2[1], app2[2],0x0F00);
@@ -407,11 +409,11 @@ int read_sectors(unsigned int lba, unsigned char count, unsigned char* buffer) {
 }
 int fat_read_bpb(void) {
     if (read_sectors(FAT12_LBA_OFFSET, 1, (unsigned char*)&g_bpb) != 0) {
-        kprint("BPB reading problem!", 0x4F00, vga + 960);
+        kprint("BPB reading problem!", 0x4F00, vga + 881);
         return -1;
     }
     if (g_bpb.BPB_BytesPerSec != 512) {
-        kprint("BPB unallowed size!", 0x4F00, vga + 960);
+        kprint("BPB unallowed size!", 0x4F00, vga + 881);
         return -1;
     }
     return 0;
@@ -681,7 +683,7 @@ void run_app(const char* filename) {
     char temp_buffer[TEMP_BUFFER_SIZE]; 
     int file_size = read_file(filename, temp_buffer, TEMP_BUFFER_SIZE);
     if (file_size < 0) {
-        kprint("File not found or read error!", 0x4F00, vga+960);
+        kprint("File not found or read error!", 0x4F00, vga+921);
         kpause();
         return;
     } 

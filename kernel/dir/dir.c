@@ -43,16 +43,16 @@ void dir(void) {
     
     // Fejléc kiírása
     kprint("Directory Listing (FAT12 Root)", 0x0A00, vga_cursor_pos);
-    vga_cursor_index += 80;
-    vga_cursor_pos += 80; 
+    vga_cursor_index += 40;
+    vga_cursor_pos += 40; 
     
     kprint("FILENAME        TYPE      SIZE", 0x0F00, vga_cursor_pos);
-    vga_cursor_index += 80;
-    vga_cursor_pos += 80; 
+    vga_cursor_index += 40;
+    vga_cursor_pos += 40; 
 
-    kprint("--------------------------------------------------------------------------------", 0x0700, vga_cursor_pos);
-    vga_cursor_index += 80;
-    vga_cursor_pos += 80; 
+    kprint("----------------------------------------", 0x0700, vga_cursor_pos);
+    vga_cursor_index += 40;
+    vga_cursor_pos += 40; 
 
     // Fájlszámláló
     int entry_count = 0;
@@ -154,7 +154,7 @@ void dir(void) {
     }
 
 end_listing:
-    vga_cursor_index += 80;
+    vga_cursor_index += 40;
     vga_cursor_pos = (volatile unsigned short*)0xb8000 + vga_cursor_index;
     
     kprint("Total entries found: ", 0x0A00, vga_cursor_pos);
