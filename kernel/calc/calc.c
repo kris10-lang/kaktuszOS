@@ -36,7 +36,7 @@ void calc(void) {
         char bnum2[32] = {0};
         char muvelet[3] = {0};
         char newcalc[2] = {0};
-        kinput(41, newcalc, sizeof(newcalc));
+        kinput(81, newcalc, sizeof(newcalc));
         if (strcmp(newcalc, "0") == 0){
             on = 0;
         } 
