@@ -234,11 +234,7 @@ void kinput(int vga_pos_start, char* buffer, int buffer_size, int shadow_mode) {
                 cmd_len--;
                 buffer[cmd_len] = '\0';
                 vga_pos_current--;
-                
-                // 1. Törlés a felső sorban
                 vga[vga_pos_current] = (unsigned short)(' ' | 0x0F00);
-                
-                // 2. Törlés az alsó sorban (MOST KERÜL BE)
                 if (shadow_mode) {
                     vga[vga_pos_current + VGA_WIDTH] = (unsigned short)(' ' | 0x0F00); 
                 }
@@ -249,15 +245,11 @@ void kinput(int vga_pos_start, char* buffer, int buffer_size, int shadow_mode) {
             if (cmd_len < buffer_size - 1) {
                 buffer[cmd_len++] = ch;
                 buffer[cmd_len] = '\0';
-                
-                // 1. Kiírás az aktuális sorba
                 vga[vga_pos_current] = (unsigned short)(ch | 0x0F00);
                 
-                // 2. Kiírás az alatta lévő sorba, ha az árnyék mód aktív
                 if (shadow_mode) {
                     const int VGA_WIDTH = 40;
                     if ((vga_pos_current + VGA_WIDTH) < (40 * 25)) { 
-                        // Itt lehetne eltérő színkód is (pl. 0x800 a szürke árnyékhoz)
                         vga[vga_pos_current + VGA_WIDTH] = (unsigned short)(ch | 0x0F00);
                     }
                 }
@@ -275,18 +267,15 @@ void kinput2(int vga_pos_start, char* buffer, int buffer_size, int shadow_mode) 
     int vga_pos_current = vga_pos_start; 
     buffer[0] = '\0';
     
-    // Feltételezve, hogy 40 oszlopos módban vagyunk, ahogy az Ön kódjában szerepelt
     const int VGA_WIDTH = 40; 
 
     while (1) {
         unsigned char scancode;
         
-        // Várjon a billentyű lenyomására (Make Code, 0x80 bit NEM aktív)
         do {
             scancode = kinb(0x60);
         } while (scancode & 0x80);
 
-        // --- 3. ALAPVETŐ MŰVELETEK ---
         if (scancode == 0x1C) { // Enter (0x1C)
             break;
         }
@@ -296,39 +285,26 @@ void kinput2(int vga_pos_start, char* buffer, int buffer_size, int shadow_mode) 
                 buffer[cmd_len] = '\0';
                 vga_pos_current--;
                 
-                // Törlés az aktuális sorban
                 vga[vga_pos_current] = (unsigned short)(' ' | 0x0F00); 
                 
-                // Törlés az alatta lévő sorban, ha az árnyék mód aktív
                 if (shadow_mode) {
                     vga[vga_pos_current + VGA_WIDTH] = (unsigned short)(' ' | 0x0F00); 
                 }
             }
-            // Hagyjuk, hogy a Break code várás elkapja a 0x8E-t
         }
 
-        // --- 4. ASCII KONVERZIÓ ÉS NAGYBETŰSÍTÉS ---
         unsigned char ch = kscancode_to_ascii(scancode);
         
-        // **VÁLTOZTATÁS ITT: Bármely kisbetűt konvertáljon nagybetűvé**
         if (ch >= 'a' && ch <= 'z') {
-            ch -= 32; // ASCII kód szerint 'a' és 'A' között 32 a különbség
+            ch -= 32;
         }
         
         if (ch != 0) {
-            
-            // A NAGYBETŰSÍTÉS ITT már megtörtént, így a 'shift_active' ellenőrzés
-            // csak a számsor/speciális karakterek szempontjából lehetne releváns.
-            
-            // Karakter hozzáadása a pufferhez
             if (cmd_len < buffer_size - 1) {
                 buffer[cmd_len++] = ch;
                 buffer[cmd_len] = '\0';
                 
-                // 1. Kiírás az aktuális sorba
                 vga[vga_pos_current] = (unsigned short)(ch | 0x0F00);
-                
-                // 2. Kiírás az alatta lévő sorba, ha az árnyék mód aktív
                 if (shadow_mode) {
                     if ((vga_pos_current + VGA_WIDTH) < (40 * 25)) { 
                         vga[vga_pos_current + VGA_WIDTH] = (unsigned short)(ch | 0x0F00);
@@ -339,11 +315,8 @@ void kinput2(int vga_pos_start, char* buffer, int buffer_size, int shadow_mode) 
             }
         }
 
-        // --- 5. Várjon a billentyű felengedésére (Break Code) ---
         do {
             scancode = kinb(0x60);
-            
-            // Shift Felengedve (Break Code: 0xAA vagy 0xB6)
             if (scancode == 0xAA || scancode == 0xB6) {
                 shift_active = 0;
             }
@@ -535,19 +508,14 @@ found_file:
 }
 int strlen(const char* str) {
     int length = 0;
-    
-    // Végigmegy a stringen, amíg el nem éri a nulla karaktert ('\0')
     while (str[length] != '\0') {
         length++;
     }
     
     return length;
 }
-// kernel.c - valahova a read_sectors() mellé
 int write_sectors(unsigned int lba, unsigned char count, unsigned char* buffer) {
-    ata_wait_for_ready(); // Vár a BSY bitre
-    
-    // 1. Regiszterek beállítása
+    ata_wait_for_ready();
     koutb(ATA_PRIMARY_DCR, 0x00);
     koutb(ATA_PRIMARY_SECTOR_COUNT, count);
     koutb(ATA_PRIMARY_LBA_LOW, (unsigned char)(lba & 0xFF));
@@ -555,51 +523,39 @@ int write_sectors(unsigned int lba, unsigned char count, unsigned char* buffer) 
     koutb(ATA_PRIMARY_LBA_HIGH, (unsigned char)((lba >> 16) & 0xFF));
     koutb(ATA_PRIMARY_DRIVE_HEAD, 0xE0 | ((lba >> 24) & 0x0F)); 
     
-    // 2. Írás parancs kiadása
-    koutb(ATA_PRIMARY_COMMAND, 0x30); // WRITE SECTORS
+    koutb(ATA_PRIMARY_COMMAND, 0x30);
     
-    // 3. Adatok átvitele
     for (int i = 0; i < count; i++) {
-        ata_wait_for_ready(); // Vár a DRQ bitre
-        if (!(kinb(ATA_PRIMARY_STATUS) & 0x08)) return -1; // Ellenőrzi a DRQ bitet (Adat Kérés)
-        
+        ata_wait_for_ready();
+        if (!(kinb(ATA_PRIMARY_STATUS) & 0x08)) return -1;
         unsigned short* current_buffer_16bit = (unsigned short*)(buffer + i * SECTOR_SIZE);
         for (int j = 0; j < 256; j++) {
-            koutw(ATA_PRIMARY_DATA, current_buffer_16bit[j]); // Írás 16 bites szóval
+            koutw(ATA_PRIMARY_DATA, current_buffer_16bit[j]);
         }
     }
     
-    // 4. Cache Flössölés (Fontos!)
-    koutb(ATA_PRIMARY_COMMAND, 0xE7); // CACHE FLUSH
+    koutb(ATA_PRIMARY_COMMAND, 0xE7);
     ata_wait_for_ready(); 
     
     return 0;
 }
 
-// Szükség lehet koutw implementációra (write word)
 static inline void koutw(unsigned short port, unsigned short data) {
     __asm__ volatile ("outw %w0, %w1" : : "a"(data), "Nd"(port));
 }
 #define FAT_ENTRY_FREE 0x0000 
 #define FAT_ENTRY_EOF 0x0FFF 
 
-// Megjegyzés: A g_fat_table-t feltételezzük, hogy be van töltve (vagy be kell tölteni ezen a ponton)
 unsigned short fat_find_free_cluster(void) {
     if (fat_read_bpb() != 0) return 0; // BPB adatok frissítése
     
     unsigned int LBA_FAT = FAT12_LBA_OFFSET + g_bpb.BPB_RsvdSecCnt;
     
-    // Itt kellene betölteni a teljes FAT-ot a g_fat_table-ba
     if (read_sectors(LBA_FAT, g_bpb.BPB_FATSz16 * g_bpb.BPB_NumFATs, g_fat_table) != 0) {
-        // Hiba esetén térjen vissza, vagy implementálja a FAT tábla betöltését
         return 0; 
     }
     
-    // Nagyon egyszerű klaszterszámítás: feltételezi, hogy a FAT max 4096 bejegyzés
     for (unsigned short cluster = 2; cluster < 4085; cluster++) { 
-        // Ehhez a híváshoz át kellene írni a fat_read_fat_entry-t, hogy a g_fat_table-ből olvasson.
-        // Helyette közvetlenül a g_fat_table-t használjuk (komplexebb, de pontosabb)
-        
         unsigned int FAT_offset = cluster + (cluster / 2);
         unsigned int sector_offset = FAT_offset / SECTOR_SIZE;
         unsigned int entry_offset = FAT_offset % SECTOR_SIZE;
@@ -608,30 +564,26 @@ unsigned short fat_find_free_cluster(void) {
         unsigned short entry_value = *(unsigned short*)&sector_buffer[entry_offset];
         
         unsigned short current_entry;
-        if (cluster & 0x01) { // Páratlan klaszter (magasabb 12 bit)
+        if (cluster & 0x01) {
             current_entry = entry_value >> 4;
-        } else { // Páros klaszter (alacsonyabb 12 bit)
+        } else {
             current_entry = entry_value & 0x0FFF;
         }
         
         if (current_entry == FAT_ENTRY_FREE) {
-            // Klasszter foglalt (EOF beállítás)
             if (cluster & 0x01) { 
-                // Páratlan: 0xFFF-et írja a 4. bit pozíciótól
                 *(unsigned short*)&sector_buffer[entry_offset] = (entry_value & 0x000F) | (FAT_ENTRY_EOF << 4);
             } else { 
-                // Páros: 0xFFF-et írja az első 12 bitre
                 *(unsigned short*)&sector_buffer[entry_offset] = (entry_value & 0xF000) | FAT_ENTRY_EOF;
             }
 
-            // FAT tábla visszaírása a lemezre (mindkét példány)
             write_sectors(LBA_FAT, g_bpb.BPB_FATSz16, g_fat_table);
             write_sectors(LBA_FAT + g_bpb.BPB_FATSz16, g_bpb.BPB_FATSz16, g_fat_table); // 2. FAT
             
             return cluster;
         }
     }
-    return 0; // Nincs szabad klaszter
+    return 0;
 }
 char toupper(char c) {
     if (c >= 'a' && c <= 'z') return c - 32;

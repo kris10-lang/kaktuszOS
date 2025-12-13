@@ -5,8 +5,6 @@ void edit(void) {
 
     kpause();
     kinput2(886, filename, sizeof(filename),1);
-
-    // Ellenőrzés: nem lehet üres név
     int valid = 0;
     for (int i = 0; i < sizeof(filename); i++) {
         if (filename[i] == '\0') break;
@@ -21,7 +19,6 @@ void edit(void) {
         return;
     }
 
-    // Ha létezik, beolvassuk, ha nem, akkor üres tartalommal folytatjuk
     if (file_exists(filename)) {
         length = read_file(filename, content, sizeof(content));
         if (length < 0) {
@@ -42,15 +39,12 @@ void edit(void) {
     kprint("+--------------------------------------+", 0x0F00, vga+80);
 
     kpause();
-    // Most kérjük be a szerkesztett szöveget (vagy akár kódot erre a részre)
     kinput(120, content, sizeof(content),0);
 
-    // Ha létezett a fájl, töröljük
     if (file_exists(filename)) {
         delete_file(filename);
     }
 
-    // Ha van tartalom, létrehozzuk a fájlt
     int new_length = 0;
     for (int i = 0; i < sizeof(content); i++) {
         if (content[i] == '\0') break;

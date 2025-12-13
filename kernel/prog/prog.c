@@ -17,21 +17,15 @@ void prog(void) {
         kpause();
         return;
     }
-    // Most töröljük a képernyőt
     kclearscreen();
-    // Első képernyő – nincs törlés
     kprint("+--------------------------------------+", 0x0F00, vga);
     kprint("|Write in hex code without 0x prefix   |", 0x0F00, vga + 40);
     kprint("+--------------------------------------+", 0x0F00, vga + 80);
     kpause();
-    // Beolvasunk egy sort szövegesen (pl: "84 97 bb aa")
     kinput(120, input, sizeof(input),0);
 
     while (input[i] != '\0' && input[i] != '\n' && j < (int)sizeof(buffer)) {
-        // Skip spaces
         while (input[i] == ' ' || input[i] == '\t') i++;
-
-        // Ha a következő 2 karakter hex számjegyek, olvassuk be őket
         if (input[i] && input[i+1]) {
             int val = hex_to_byte(&input[i]);
             if (val < 0) {
@@ -42,7 +36,6 @@ void prog(void) {
             buffer[j++] = (unsigned char)val;
             i += 2;
         } else if (input[i]) {
-            // Egyetlen hex karakter is elfogadott (pl: 'a' -> 0x0a)
             int val = hex_char_to_int(input[i]);
             if (val < 0) {
                 kprint("Invalid hex input!", 0x4F00, vga+120);

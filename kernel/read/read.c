@@ -4,19 +4,15 @@ void read(void) {
 
     kpause();
 
-    // Név beolvasása kinput2-vel a 1520+22+5 = 1547 offseten
     kinput2(886, filename, sizeof(filename),1);
 
-    // Ha üres a név
     if (filename[0] == '\0') {
         kprint("Error: Filename cannot be empty.", 0x4F00, vga + 921);
         kpause();
         return;
     }
 
-    // Most töröljük a képernyőt
     kclearscreen();
-    // Első képernyő – nincs törlés
     kprint("+--------------------------------------+", 0x0F00, vga);
     kprint("|File content:                         |", 0x0F00, vga + 40);
     kprint("+--------------------------------------+", 0x0F00, vga + 80);
