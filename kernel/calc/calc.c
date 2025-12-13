@@ -17,17 +17,17 @@ void calc(void) {
     while(on){
         kclearscreen();
         kprint("+-------------------+",0x0F00,vga);
-        kprint("|new calc(1/0):     |",0x0F00,vga+80);
+        kprint("|new calc(1/0):     |",0x0F00,vga+40);
+        kprint("|                   |",0x0F00,vga+80);
+        kprint("|first number:      |",0x0F00,vga+120);
         kprint("|                   |",0x0F00,vga+160);
-        kprint("|first number:      |",0x0F00,vga+240);
+        kprint("|second number:     |",0x0F00,vga+200);
+        kprint("|                   |",0x0F00,vga+240);
+        kprint("|operator:          |",0x0F00,vga+280);
         kprint("|                   |",0x0F00,vga+320);
-        kprint("|second number:     |",0x0F00,vga+400);
-        kprint("|                   |",0x0F00,vga+480);
-        kprint("|operator:          |",0x0F00,vga+560);
-        kprint("|                   |",0x0F00,vga+640);
-        kprint("|result:            |",0x0F00,vga+720);
-        kprint("|                   |",0x0F00,vga+800);
-        kprint("+-------------------+",0x0F00,vga+880);
+        kprint("|result:            |",0x0F00,vga+360);
+        kprint("|                   |",0x0F00,vga+400);
+        kprint("+-------------------+",0x0F00,vga+440);
         int eredmeny;
         char szeredmeny[32] = {0};
         int knum1 = 0;
@@ -36,17 +36,17 @@ void calc(void) {
         char bnum2[32] = {0};
         char muvelet[3] = {0};
         char newcalc[2] = {0};
-        kinput(161, newcalc, sizeof(newcalc));
+        kinput(41, newcalc, sizeof(newcalc));
         if (strcmp(newcalc, "0") == 0){
             on = 0;
         } 
         else if (strcmp(newcalc, "1") == 0) {
             kpause();
-            kinput(321, bnum1, sizeof(bnum1));
+            kinput(161, bnum1, sizeof(bnum1));
             kpause();
-            kinput(481, bnum2, sizeof(bnum2));
+            kinput(241, bnum2, sizeof(bnum2));
             kpause();
-            kinput(641, muvelet, sizeof(muvelet));
+            kinput(321, muvelet, sizeof(muvelet));
             string_to_int(bnum1, &knum1);
             string_to_int(bnum2, &knum2);
             if (strcmp(muvelet, "+") == 0) {
@@ -62,7 +62,7 @@ void calc(void) {
                 if (knum2 != 0) {
                     eredmeny = knum1 / knum2;
                 } else {
-                    kprint("DIV BY ZERO", 0x4F00, vga+801);
+                    kprint("DIV BY ZERO", 0x4F00, vga+401);
                     kpause();
                     kpause();
                     continue;
@@ -72,17 +72,17 @@ void calc(void) {
                 eredmeny = hatvany(knum1, knum2);
             }
             else {
-                kprint("OP ERROR", 0x4F00, vga+801);
+                kprint("OP ERROR", 0x4F00, vga+401);
                 kpause();
                 kpause();
                 continue; 
             }
             int_to_string(eredmeny, szeredmeny);
-            kprint(szeredmeny, 0x0F00, vga + 801);
+            kprint(szeredmeny, 0x0F00, vga + 401);
             kpause();
             kpause();
         } else {
-            kprint("Invalid input (0/1)", 0x4F00, vga+801);
+            kprint("Invalid input (0/1)", 0x4F00, vga+401);
             kpause();
             kpause();
         }
