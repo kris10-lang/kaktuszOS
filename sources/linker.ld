@@ -2,7 +2,7 @@ ENTRY(start)
 
 SECTIONS
 {
-    . = 0x10000;  /* A kernel kezdő címe */
+    . = 0x0;  /* A kernel kezdő címe */
 
     .text : { *(.text*) }
     .rodata : { *(.rodata*) }

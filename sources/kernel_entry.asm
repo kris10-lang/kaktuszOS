@@ -1,4 +1,3 @@
-;kernel_entry
 section .note.GNU-stack note
 
 BITS 32

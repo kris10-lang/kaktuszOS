@@ -216,33 +216,16 @@ unsigned char kscancode_to_ascii(unsigned char scancode) {
         default: return 0;
     }
 }
-unsigned char kbd_get_scancode_safe() {
-    unsigned char status;
-    
-    // 1. Polling a Státusz Porton (0x64)
-    // Várjunk, amíg a vezérlő jelzi, hogy van adat a kimeneti bufferben.
-    // 
-    do {
-        status = kinb(0x64); // Státusz olvasása
-        
-        // Ez a hiba elkerülésének KULCSA. Ha a vezérlő nem áll készen,
-        // a kinb(0x60) hívása összeomlást okozhat.
-        
-    } while (!(status & 0x01)); // Bit 0 (Output Buffer Full) = 1, ha van scancode a 0x60-ban
-    
-    // 2. Olvassuk be az adatot a Data Portról (0x60)
-    return kinb(0x60);
-}
 void kinput(int vga_pos_start, char* buffer, int buffer_size, int shadow_mode) {
     int cmd_len = 0;
     int vga_pos_current = vga_pos_start; 
     buffer[0] = '\0';
     const int VGA_WIDTH = 40;
     while (1) {
-        unsigned char scancode = kbd_get_scancode_safe();
-        if (scancode & 0x80) {
-            continue; // Ugrás a while(1) ciklus elejére, a következő beolvasásra várva.
-        }
+        unsigned char scancode;
+        do {
+            scancode = kinb(0x60);
+        } while (scancode & 0x80);
         if (scancode == 0x1C) {
             break;
         }
@@ -465,11 +448,11 @@ int read_sectors(unsigned int lba, unsigned char count, unsigned char* buffer) {
 }
 int fat_read_bpb(void) {
     if (read_sectors(FAT12_LBA_OFFSET, 1, (unsigned char*)&g_bpb) != 0) {
-        kprint("BPB reading problem!", 0x4F00, vga + 240);
+        kprint("BPB reading problem!", 0x4F00, vga + 881);
         return -1;
     }
     if (g_bpb.BPB_BytesPerSec != 512) {
-        kprint("BPB unallowed size!", 0x4F00, vga + 240);
+        kprint("BPB unallowed size!", 0x4F00, vga + 881);
         return -1;
     }
     return 0;

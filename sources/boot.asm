@@ -21,7 +21,7 @@ start:
     xor bx, bx
 
     mov ah, 02h
-    mov al, 4              ; x db sector a kernel
+    mov al, 63              ; x db sector a kernel
     mov ch, 0
     mov cl, 2              ; sector 2
     mov dh, 0
