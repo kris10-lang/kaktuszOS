@@ -3,7 +3,7 @@ void make(void) {
     char filename[13];
 
     kpause();
-    kinput2(886, filename, sizeof(filename));
+    kinput2(886, filename, sizeof(filename),1);
 
     // Ellenőrizzük, hogy a fájlnév nem üres-e
     int valid = 0;
@@ -33,7 +33,7 @@ void make(void) {
     kprint("|File content:                         |", 0x0F00, vga+40);
     kprint("+--------------------------------------+", 0x0F00, vga+80);
     kpause();
-    kinput(120, content, sizeof(content));
+    kinput(120, content, sizeof(content),0);
 
     // Fájl létrehozása
     int result = create_file(filename, content, strlen(content));

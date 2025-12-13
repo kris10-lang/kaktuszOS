@@ -36,17 +36,17 @@ void calc(void) {
         char bnum2[32] = {0};
         char muvelet[3] = {0};
         char newcalc[2] = {0};
-        kinput(81, newcalc, sizeof(newcalc));
+        kinput(81, newcalc, sizeof(newcalc),0);
         if (strcmp(newcalc, "0") == 0){
             on = 0;
         } 
         else if (strcmp(newcalc, "1") == 0) {
             kpause();
-            kinput(161, bnum1, sizeof(bnum1));
+            kinput(161, bnum1, sizeof(bnum1),0);
             kpause();
-            kinput(241, bnum2, sizeof(bnum2));
+            kinput(241, bnum2, sizeof(bnum2),0);
             kpause();
-            kinput(321, muvelet, sizeof(muvelet));
+            kinput(321, muvelet, sizeof(muvelet),0);
             string_to_int(bnum1, &knum1);
             string_to_int(bnum2, &knum2);
             if (strcmp(muvelet, "+") == 0) {

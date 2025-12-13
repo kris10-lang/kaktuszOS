@@ -9,7 +9,7 @@ void kmain(void) {
     while (1) {
         kinit_gui();
         kprint("                                    ", 0x0F00, vga+881);
-        kinput(881,command,sizeof(command));
+        kinput(881,command,sizeof(command),1);
         if (strcmp(command, "logo") == 0) {
             logo();
         }
@@ -28,7 +28,7 @@ void kmain(void) {
         if (strcmp(command, "run") == 0) {
             char filename[13];
             kpause();
-            kinput2(885, filename, sizeof(filename));
+            kinput2(885, filename, sizeof(filename),1);
             run_app(filename);
         }
         if (strcmp(command, "del") == 0) {
@@ -216,10 +216,11 @@ unsigned char kscancode_to_ascii(unsigned char scancode) {
         default: return 0;
     }
 }
-void kinput(int vga_pos_start, char* buffer, int buffer_size) {
+void kinput(int vga_pos_start, char* buffer, int buffer_size, int shadow_mode) {
     int cmd_len = 0;
     int vga_pos_current = vga_pos_start; 
     buffer[0] = '\0';
+    const int VGA_WIDTH = 40;
     while (1) {
         unsigned char scancode;
         do {
@@ -228,12 +229,19 @@ void kinput(int vga_pos_start, char* buffer, int buffer_size) {
         if (scancode == 0x1C) {
             break;
         }
-        if (scancode == 0x0E) {
+        if (scancode == 0x0E) { // Backspace
             if (cmd_len > 0) {
                 cmd_len--;
                 buffer[cmd_len] = '\0';
                 vga_pos_current--;
-                vga[vga_pos_current] = (unsigned short)(' ' | 0x0F00); 
+                
+                // 1. Törlés a felső sorban
+                vga[vga_pos_current] = (unsigned short)(' ' | 0x0F00);
+                
+                // 2. Törlés az alsó sorban (MOST KERÜL BE)
+                if (shadow_mode) {
+                    vga[vga_pos_current + VGA_WIDTH] = (unsigned short)(' ' | 0x0F00); 
+                }
             }
         }
         unsigned char ch = kscancode_to_ascii(scancode);
@@ -241,7 +249,20 @@ void kinput(int vga_pos_start, char* buffer, int buffer_size) {
             if (cmd_len < buffer_size - 1) {
                 buffer[cmd_len++] = ch;
                 buffer[cmd_len] = '\0';
-                vga[vga_pos_current++] = (unsigned short)(ch | 0x0F00);
+                
+                // 1. Kiírás az aktuális sorba
+                vga[vga_pos_current] = (unsigned short)(ch | 0x0F00);
+                
+                // 2. Kiírás az alatta lévő sorba, ha az árnyék mód aktív
+                if (shadow_mode) {
+                    const int VGA_WIDTH = 40;
+                    if ((vga_pos_current + VGA_WIDTH) < (40 * 25)) { 
+                        // Itt lehetne eltérő színkód is (pl. 0x800 a szürke árnyékhoz)
+                        vga[vga_pos_current + VGA_WIDTH] = (unsigned short)(ch | 0x0F00);
+                    }
+                }
+                
+                vga_pos_current++;
             }
         }
         do {
@@ -249,10 +270,13 @@ void kinput(int vga_pos_start, char* buffer, int buffer_size) {
         } while (!(scancode & 0x80));
     }
 }
-void kinput2(int vga_pos_start, char* buffer, int buffer_size) {
+void kinput2(int vga_pos_start, char* buffer, int buffer_size, int shadow_mode) {
     int cmd_len = 0;
     int vga_pos_current = vga_pos_start; 
     buffer[0] = '\0';
+    
+    // Feltételezve, hogy 40 oszlopos módban vagyunk, ahogy az Ön kódjában szerepelt
+    const int VGA_WIDTH = 40; 
 
     while (1) {
         unsigned char scancode;
@@ -271,7 +295,14 @@ void kinput2(int vga_pos_start, char* buffer, int buffer_size) {
                 cmd_len--;
                 buffer[cmd_len] = '\0';
                 vga_pos_current--;
+                
+                // Törlés az aktuális sorban
                 vga[vga_pos_current] = (unsigned short)(' ' | 0x0F00); 
+                
+                // Törlés az alatta lévő sorban, ha az árnyék mód aktív
+                if (shadow_mode) {
+                    vga[vga_pos_current + VGA_WIDTH] = (unsigned short)(' ' | 0x0F00); 
+                }
             }
             // Hagyjuk, hogy a Break code várás elkapja a 0x8E-t
         }
@@ -279,27 +310,32 @@ void kinput2(int vga_pos_start, char* buffer, int buffer_size) {
         // --- 4. ASCII KONVERZIÓ ÉS NAGYBETŰSÍTÉS ---
         unsigned char ch = kscancode_to_ascii(scancode);
         
+        // **VÁLTOZTATÁS ITT: Bármely kisbetűt konvertáljon nagybetűvé**
+        if (ch >= 'a' && ch <= 'z') {
+            ch -= 32; // ASCII kód szerint 'a' és 'A' között 32 a különbség
+        }
+        
         if (ch != 0) {
             
-            if (shift_active) {
-                // Betűk
-                if (ch >= 'a' && ch <= 'z') {
-                    ch -= 32;
-                } 
-                // Számok és Speciális Karakterek
-                else {
-                    switch (scancode) {
-                        case 0x02: ch = '!'; break; 
-                        // ... (többi Shiftelt karakter)
-                    }
-                }
-            }
+            // A NAGYBETŰSÍTÉS ITT már megtörtént, így a 'shift_active' ellenőrzés
+            // csak a számsor/speciális karakterek szempontjából lehetne releváns.
             
             // Karakter hozzáadása a pufferhez
             if (cmd_len < buffer_size - 1) {
                 buffer[cmd_len++] = ch;
                 buffer[cmd_len] = '\0';
-                vga[vga_pos_current++] = (unsigned short)(ch | 0x0F00);
+                
+                // 1. Kiírás az aktuális sorba
+                vga[vga_pos_current] = (unsigned short)(ch | 0x0F00);
+                
+                // 2. Kiírás az alatta lévő sorba, ha az árnyék mód aktív
+                if (shadow_mode) {
+                    if ((vga_pos_current + VGA_WIDTH) < (40 * 25)) { 
+                        vga[vga_pos_current + VGA_WIDTH] = (unsigned short)(ch | 0x0F00);
+                    }
+                }
+                
+                vga_pos_current++;
             }
         }
 
@@ -887,5 +923,8 @@ int hex_to_byte(const char* str) {
     int lo = hex_char_to_int(str[1]);
     if (hi < 0 || lo < 0) return -1;
     return (hi << 4) | lo;
+}
+void kputchar(char character, unsigned color, volatile unsigned short* addr) {
+    *addr = (unsigned short)(character | color);
 }
 #include "apps.c"

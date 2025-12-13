@@ -4,7 +4,7 @@ void del(void) {
     kpause();
 
     // Fájlnév bekérése
-    kinput2(885, filename, sizeof(filename));
+    kinput2(885, filename, sizeof(filename),1);
 
     // Üres fájlnév hiba
     if (filename[0] == '\0') {

@@ -3,9 +3,9 @@ void copy(void) {
     char filename2[13];
     char file_content[512];
     kpause();
-    kinput2(886,filename1,sizeof(filename1));
+    kinput2(886,filename1,sizeof(filename1),1);
     kpause();
-    kinput2(886+13,filename2,sizeof(filename2));
+    kinput2(886+13,filename2,sizeof(filename2),1);
     int size = read_file(filename1, file_content, sizeof(file_content));
     if (size > 0) {
         if (file_exists(filename2)) {
@@ -26,9 +26,9 @@ void rename(void) {
     char filename2[13];
     char file_content[512];
     kpause();
-    kinput2(886,filename1,sizeof(filename1));
+    kinput2(886,filename1,sizeof(filename1),1);
     kpause();
-    kinput2(886+13,filename2,sizeof(filename2));
+    kinput2(886+13,filename2,sizeof(filename2),1);
     int size = read_file(filename1, file_content, sizeof(file_content));
     if (size > 0) {
         if (file_exists(filename2)) {

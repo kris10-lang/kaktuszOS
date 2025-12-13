@@ -5,7 +5,7 @@ void read(void) {
     kpause();
 
     // Név beolvasása kinput2-vel a 1520+22+5 = 1547 offseten
-    kinput2(886, filename, sizeof(filename));
+    kinput2(886, filename, sizeof(filename),1);
 
     // Ha üres a név
     if (filename[0] == '\0') {

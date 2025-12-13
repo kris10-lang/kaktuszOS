@@ -5,8 +5,8 @@ void kprint_int(int value, unsigned short color, volatile unsigned short* start_
 void kprint_spaces(int count, unsigned short color, volatile unsigned short* start_addr);
 void kwriteapp(const char* text, int start_c, int sorindex1, int sorindex2, unsigned color);
 unsigned char kscancode_to_ascii(unsigned char scancode);
-void kinput(int vga_pos_start, char* buffer, int buffer_size);
-void kinput2(int vga_pos_start, char* buffer, int buffer_size);
+void kinput(int vga_pos_start, char* buffer, int buffer_size, int shadow_mode);
+void kinput2(int vga_pos_start, char* buffer, int buffer_size, int shadow_mode);
 static inline unsigned char kinb(unsigned short port);
 int strcmp(const char* s1, const char* s2);
 void kpause(void);
@@ -33,3 +33,4 @@ int delete_file(const char* filename);
 int file_exists(const char* filename);
 int hex_char_to_int(char c);
 int hex_to_byte(const char* str);
+void kputchar(char character, unsigned color, volatile unsigned short* addr);

@@ -4,7 +4,7 @@ void edit(void) {
     int length = 0;
 
     kpause();
-    kinput2(886, filename, sizeof(filename));
+    kinput2(886, filename, sizeof(filename),1);
 
     // Ellenőrzés: nem lehet üres név
     int valid = 0;
@@ -43,7 +43,7 @@ void edit(void) {
 
     kpause();
     // Most kérjük be a szerkesztett szöveget (vagy akár kódot erre a részre)
-    kinput(120, content, sizeof(content));
+    kinput(120, content, sizeof(content),0);
 
     // Ha létezett a fájl, töröljük
     if (file_exists(filename)) {
