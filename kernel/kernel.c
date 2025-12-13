@@ -547,7 +547,7 @@ static inline void koutw(unsigned short port, unsigned short data) {
 #define FAT_ENTRY_EOF 0x0FFF 
 
 unsigned short fat_find_free_cluster(void) {
-    if (fat_read_bpb() != 0) return 0; // BPB adatok frissítése
+    if (fat_read_bpb() != 0) return 0;
     
     unsigned int LBA_FAT = FAT12_LBA_OFFSET + g_bpb.BPB_RsvdSecCnt;
     
@@ -578,7 +578,7 @@ unsigned short fat_find_free_cluster(void) {
             }
 
             write_sectors(LBA_FAT, g_bpb.BPB_FATSz16, g_fat_table);
-            write_sectors(LBA_FAT + g_bpb.BPB_FATSz16, g_bpb.BPB_FATSz16, g_fat_table); // 2. FAT
+            write_sectors(LBA_FAT + g_bpb.BPB_FATSz16, g_bpb.BPB_FATSz16, g_fat_table);
             
             return cluster;
         }
@@ -591,7 +591,6 @@ char toupper(char c) {
 }
 
 int fat_create_file_entry(const char* filename, unsigned short start_cluster, unsigned int file_size) {
-    // BPB olvasás feltételezve
     unsigned int LBA_FAT = FAT12_LBA_OFFSET + g_bpb.BPB_RsvdSecCnt;
     unsigned int LBA_RDIR = LBA_FAT + (g_bpb.BPB_NumFATs * g_bpb.BPB_FATSz16);
     int root_dir_sectors = (g_bpb.BPB_RootEntCnt * 32) / SECTOR_SIZE;
@@ -599,7 +598,6 @@ int fat_create_file_entry(const char* filename, unsigned short start_cluster, un
     unsigned char root_dir_buffer[SECTOR_SIZE];
     DIR_Entry* entry;
     
-    // 1. Fájlnév konvertálása 8.3 FAT formátumra
     unsigned char fat_name[11] = "           ";
     int k = 0;
     for (int i = 0; i < strlen(filename); i++) {
@@ -613,47 +611,35 @@ int fat_create_file_entry(const char* filename, unsigned short start_cluster, un
         }
     }
     
-    // 2. Keresés szabad bejegyzésre és írás
     for (int i = 0; i < root_dir_sectors; i++) {
         if (read_sectors(LBA_RDIR + i, 1, root_dir_buffer) != 0) return -1;
         
         for (int j = 0; j < SECTOR_SIZE / sizeof(DIR_Entry); j++) {
             entry = (DIR_Entry*)&root_dir_buffer[j * sizeof(DIR_Entry)];
             
-            if (entry->DIR_Name[0] == 0x00 || entry->DIR_Name[0] == 0xE5) { // Szabad vagy törölt
+            if (entry->DIR_Name[0] == 0x00 || entry->DIR_Name[0] == 0xE5) {
                 
-                // Bejegyzés kitöltése
                 for (int l = 0; l < 11; l++) { entry->DIR_Name[l] = fat_name[l]; }
-                entry->DIR_Attr = 0x20; // Archív bit (A)
+                entry->DIR_Attr = 0x20;
                 entry->DIR_FstClus = start_cluster;
                 entry->DIR_FileSize = file_size;
-                
-                // Mivel nem kezeljük a dátumot/időt, hagyjuk ki.
-                // entry->DIR_WrtDate = 0;
-                // entry->DIR_WrtTime = 0;
-                
-                // Bejegyzés visszaírása a lemezre
                 if (write_sectors(LBA_RDIR + i, 1, root_dir_buffer) != 0) return -1;
                 
-                return 0; // Sikeres
+                return 0;
             }
         }
     }
     
-    return -1; // Nincs szabad bejegyzés
+    return -1;
 }
-// kernel.c
 int create_file(const char* filename, const char* content, int len) {
     if (fat_read_bpb() != 0) return -1;
     
     int content_len = len;
-    if (content_len > SECTOR_SIZE) content_len = SECTOR_SIZE; // Egyszerűsítés: max 1 szektor
-    
-    // 1. Klaszter foglalása a FAT-ban
+    if (content_len > SECTOR_SIZE) content_len = SECTOR_SIZE;
     unsigned short start_cluster = fat_find_free_cluster();
     if (start_cluster == 0) return -1; 
     
-    // 2. Tartalom írása az adatterületre
     unsigned int lba_addr = fat_calc_lba(start_cluster);
     unsigned char sector_buffer[SECTOR_SIZE];
     for(int i = 0; i < SECTOR_SIZE; i++) sector_buffer[i] = 0; 
@@ -664,7 +650,6 @@ int create_file(const char* filename, const char* content, int len) {
     
     if (write_sectors(lba_addr, 1, sector_buffer) != 0) return -1;
     
-    // 3. Gyökérkönyvtár bejegyzésének létrehozása
     if (fat_create_file_entry(filename, start_cluster, content_len) != 0) return -1;
     
     return 0;
@@ -689,25 +674,18 @@ void run_app(const char* filename) {
     kpause(); 
 }
 void run_assembly_code(void* app_address) {
-    // Használjuk a GCC inline assembly szintaxisát
     __asm__ __volatile__ (
-        // 1. Átmásolja az app_address-t (ami az EAX-ban van) az ESI-be.
         "movl %%eax, %%esi\n"
-        
-        // 2. Ugrás az ESI regiszter tartalmára (pl. 0x20000)
-        // A 'call' utasítás pusholja a visszatérési címet a stackre, 
-        // így az alkalmazás a 'ret' utasítással tud ide visszatérni.
         "call *%%esi\n"
         
-        : /* nincs kimeneti operandus */
-        : "a" (app_address) // Bemeneti operandus: 'a' (EAX) regiszterbe tölti az 'app_address' változót
-        : "esi" // Clobbered list: ESI regiszter megváltozik (hogy a GCC tudja, ne használja)
+        : 
+        : "a" (app_address)
+        : "esi"
     );
 }
 int delete_file(const char* filename) {
     if (fat_read_bpb() != 0) return -1;
 
-    // FAT1 LBA: a BPB helye (FAT12_LBA_OFFSET) + a rezervált szektorok száma.
     unsigned int LBA_FAT1 = FAT12_LBA_OFFSET + g_bpb.BPB_RsvdSecCnt;
     unsigned int LBA_RDIR = LBA_FAT1 + (g_bpb.BPB_NumFATs * g_bpb.BPB_FATSz16);
     int root_dir_sectors = (g_bpb.BPB_RootEntCnt * 32) / SECTOR_SIZE;
@@ -715,11 +693,10 @@ int delete_file(const char* filename) {
     unsigned char root_buffer[SECTOR_SIZE];
     DIR_Entry* entry;
 
-    // 1) Átalakítjuk a bemeneti fájlnevet 8.3 FAT formátumra (11 char, nagybetű, space-padded)
     unsigned char fat_name[11];
     for (int i = 0; i < 11; i++) fat_name[i] = ' ';
     int idx = 0;
-    int part = 0; // 0 = name (max 8), 1 = ext (max 3)
+    int part = 0;
     for (int i = 0; filename[i] != '\0' && idx < 11; i++) {
         char c = filename[i];
         if (c == '.') { part = 1; idx = 8; continue; }
@@ -727,7 +704,6 @@ int delete_file(const char* filename) {
         else if (part == 1 && idx < 11) fat_name[idx++] = toupper(c);
     }
 
-    // 2) Keressük a root könyvtárban
     unsigned short start_cluster = 0;
     int entry_sector = -1;
     int entry_index = -1;
@@ -736,8 +712,7 @@ int delete_file(const char* filename) {
         for (int e = 0; e < SECTOR_SIZE / sizeof(DIR_Entry); e++) {
             entry = (DIR_Entry*)&root_buffer[e * sizeof(DIR_Entry)];
             unsigned char first = entry->DIR_Name[0];
-            if (first == 0x00 || first == 0xE5) continue; // üres vagy már törölt
-            // összehasonlítjuk a 11 byte-ot
+            if (first == 0x00 || first == 0xE5) continue;
             int match = 1;
             for (int k = 0; k < 11; k++) {
                 if (entry->DIR_Name[k] != fat_name[k]) { match = 0; break; }
@@ -750,39 +725,29 @@ int delete_file(const char* filename) {
             }
         }
     }
-    // nem talált
     return -1;
 
 found:
-    // 3) Töröljük a root entry első byte-ját (0xE5)
     if (read_sectors(LBA_RDIR + entry_sector, 1, root_buffer) != 0) return -1;
     entry = (DIR_Entry*)&root_buffer[entry_index * sizeof(DIR_Entry)];
     entry->DIR_Name[0] = 0xE5;
     if (write_sectors(LBA_RDIR + entry_sector, 1, root_buffer) != 0) return -1;
 
-    // 4) Beolvassuk az egész FAT-ot (mindkét FAT-másolatot g_fat_table-be)
-    // g_fat_table mérete a változókban: 512 * 9, de használjuk BPB értékét
     unsigned int fat_size_bytes = g_bpb.BPB_FATSz16 * SECTOR_SIZE;
     if (fat_size_bytes > sizeof(g_fat_table)) {
-        // Ha a g_fat_table túl kicsi, itt visszaadunk hibát
         return -1;
     }
-    // FAT1 beolvasása
     for (unsigned int sec = 0; sec < g_bpb.BPB_FATSz16; sec++) {
         if (read_sectors(LBA_FAT1 + sec, 1, g_fat_table + sec * SECTOR_SIZE) != 0)
             return -1;
     }
 
-    // 5) Felszabadítjuk a klaszterláncot a g_fat_table-ben (12-bit entry-k)
     unsigned short cur = start_cluster;
     while (cur >= 2 && cur < 0xFF8) {
-        // FAT12 offset (12-bit): cluster + cluster/2
         unsigned int offset = cur + (cur / 2);
-        unsigned int byte_index = offset; // offset bájtban
-        // Biztosítjuk, hogy a szükséges 2 bájt a bufferben legyen
+        unsigned int byte_index = offset;
         if (byte_index + 1 >= fat_size_bytes) break;
 
-        // Olvassuk a 12-bit bejegyzést
         unsigned short entry_val = g_fat_table[byte_index] | (g_fat_table[byte_index + 1] << 8);
         unsigned short next;
         if (cur & 1) {
@@ -791,29 +756,22 @@ found:
             next = entry_val & 0x0FFF;
         }
 
-        // Töröljük (0x000) a bejegyzést
         if (cur & 1) {
-            // páratlan klaszter -> a magas 12 bitet nullázzuk, alsó 4 bit megmarad
             entry_val = entry_val & 0x000F;
         } else {
-            // páros klaszter -> az alsó 12 bitet nullázzuk, felső 4 bit megmarad
             entry_val = entry_val & 0xF000;
         }
 
-        // Kiírjuk vissza a két bájtot
         g_fat_table[byte_index] = entry_val & 0xFF;
         g_fat_table[byte_index + 1] = (entry_val >> 8) & 0xFF;
 
         cur = next;
     }
 
-    // 6) Visszaírjuk a frissített FAT-ot mindkét FAT-másolatra
-    // FAT1
     for (unsigned int sec = 0; sec < g_bpb.BPB_FATSz16; sec++) {
         if (write_sectors(LBA_FAT1 + sec, 1, g_fat_table + sec * SECTOR_SIZE) != 0)
             return -1;
     }
-    // FAT2 (következő copy)
     unsigned int LBA_FAT2 = LBA_FAT1 + g_bpb.BPB_FATSz16;
     for (unsigned int sec = 0; sec < g_bpb.BPB_FATSz16; sec++) {
         if (write_sectors(LBA_FAT2 + sec, 1, g_fat_table + sec * SECTOR_SIZE) != 0)
@@ -832,10 +790,9 @@ int file_exists(const char* filename) {
     unsigned char root_dir_buffer[SECTOR_SIZE];
     DIR_Entry* entry;
 
-    // FAT 8.3 formátumú név előállítása
     unsigned char fat_name[11];
     for (int i = 0; i < 11; i++) fat_name[i] = ' ';
-    int idx = 0, part = 0; // 0 = name, 1 = ext
+    int idx = 0, part = 0;
     for (int i = 0; filename[i] != '\0' && idx < 11; i++) {
         char c = filename[i];
         if (c == '.') { part = 1; idx = 8; continue; }
@@ -855,21 +812,18 @@ int file_exists(const char* filename) {
                     break;
                 }
             }
-            if (match) return 1; // Megtaláltuk!
+            if (match) return 1;
         }
     }
 
-    return 0; // Nincs ilyen fájl
+    return 0;
 }
 int hex_char_to_int(char c) {
     if (c >= '0' && c <= '9') return c - '0';
     if (c >= 'a' && c <= 'f') return c - 'a' + 10;
     if (c >= 'A' && c <= 'F') return c - 'A' + 10;
-    return -1; // hibás karakter
+    return -1;
 }
-
-// Hex stringből bájtot csinál (2 char)
-// visszaad -1 hibára
 int hex_to_byte(const char* str) {
     int hi = hex_char_to_int(str[0]);
     int lo = hex_char_to_int(str[1]);
