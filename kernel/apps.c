@@ -8,3 +8,4 @@
 #include "edit/edit.c"
 #include "rename_copy/rename_copy.c"
 #include "help/help.c"
+#include "commodore64/commodore64.c"

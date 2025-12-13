@@ -9,3 +9,4 @@ void edit(void);
 void copy(void);
 void rename(void);
 void help(void);
+void shell(void);

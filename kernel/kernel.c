@@ -49,6 +49,9 @@ void kmain(void) {
         if (strcmp(command, "help") == 0) {
             help();
         }
+        if (strcmp(command, "commodore64") == 0) {
+            shell();
+        }
         kpause();
     }
 }
