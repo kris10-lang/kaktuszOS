@@ -34,3 +34,4 @@ int file_exists(const char* filename);
 int hex_char_to_int(char c);
 int hex_to_byte(const char* str);
 void kputchar(char character, unsigned color, volatile unsigned short* addr);
+void disk_diagnostic();

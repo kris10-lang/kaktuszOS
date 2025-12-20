@@ -5,19 +5,6 @@
 #include "prototipusok.c"
 #include "appprototipusok.c"
 //main
-void disk_diagnostic() {
-    unsigned short ports[] = {0x1F0, 0x170};
-    for(int i = 0; i < 2; i++) {
-        unsigned short p = ports[i];
-        unsigned char st = kinb(p + 7);
-        
-        kprint("Port ", 0x0700, vga + (i*80));
-        // Itt manuálisan írd ki a portot és a státuszt (st)
-        if (st == 0xFF) kprint("Status: 0xFF (Empty/RAID)", 0x4F00, vga + (i*80) + 20);
-        else if (st == 0x00) kprint("Status: 0x00 (No drive)", 0x0E00, vga + (i*80) + 20);
-        else kprint("Status: SOMETHING!", 0x0F00, vga + (i*80) + 20);
-    }
-}
 void kmain(void) {
     disk_diagnostic();
     kpause();
@@ -855,5 +842,18 @@ int hex_to_byte(const char* str) {
 }
 void kputchar(char character, unsigned color, volatile unsigned short* addr) {
     *addr = (unsigned short)(character | color);
+}
+void disk_diagnostic() {
+    unsigned short ports[] = {0x1F0, 0x170};
+    for(int i = 0; i < 2; i++) {
+        unsigned short p = ports[i];
+        unsigned char st = kinb(p + 7);
+        
+        kprint("Port ", 0x0700, vga + (i*80));
+        // Itt manuálisan írd ki a portot és a státuszt (st)
+        if (st == 0xFF) kprint("Status: 0xFF (Empty/RAID)", 0x4F00, vga + (i*80) + 20);
+        else if (st == 0x00) kprint("Status: 0x00 (No drive)", 0x0E00, vga + (i*80) + 20);
+        else kprint("Status: SOMETHING!", 0x0F00, vga + (i*80) + 20);
+    }
 }
 #include "apps.c"
