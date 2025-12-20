@@ -5,7 +5,22 @@
 #include "prototipusok.c"
 #include "appprototipusok.c"
 //main
+void disk_diagnostic() {
+    unsigned short ports[] = {0x1F0, 0x170};
+    for(int i = 0; i < 2; i++) {
+        unsigned short p = ports[i];
+        unsigned char st = kinb(p + 7);
+        
+        kprint("Port ", 0x0700, vga + (i*80));
+        // Itt manuálisan írd ki a portot és a státuszt (st)
+        if (st == 0xFF) kprint("Status: 0xFF (Empty/RAID)", 0x4F00, vga + (i*80) + 20);
+        else if (st == 0x00) kprint("Status: 0x00 (No drive)", 0x0E00, vga + (i*80) + 20);
+        else kprint("Status: SOMETHING!", 0x0F00, vga + (i*80) + 20);
+    }
+}
 void kmain(void) {
+    disk_diagnostic();
+    kpause();
     while (1) {
         kinit_gui();
         kprint("                                    ", 0x0F00, vga+881);
@@ -216,16 +231,26 @@ unsigned char kscancode_to_ascii(unsigned char scancode) {
         default: return 0;
     }
 }
+unsigned char get_scancode() {
+    // 1. Várjuk meg, amíg a Status Register (0x64) 0. bitje 1 lesz
+    // Ez jelzi, hogy van olvasható adat az Output Bufferben
+    while (!(kinb(0x64) & 1)) {
+        // Itt egy nagyon rövid várakozás (opcionális, de stabilabb)
+        asm volatile("pause"); 
+    }
+    // 2. Csak most olvassuk ki a kódot
+    return kinb(0x60);
+}
 void kinput(int vga_pos_start, char* buffer, int buffer_size, int shadow_mode) {
     int cmd_len = 0;
     int vga_pos_current = vga_pos_start; 
     buffer[0] = '\0';
     const int VGA_WIDTH = 40;
     while (1) {
-        unsigned char scancode;
-        do {
-            scancode = kinb(0x60);
-        } while (scancode & 0x80);
+        unsigned char scancode = get_scancode();
+        if (scancode & 0x80) {
+            continue; 
+        }
         if (scancode == 0x1C) {
             break;
         }
@@ -270,12 +295,10 @@ void kinput2(int vga_pos_start, char* buffer, int buffer_size, int shadow_mode) 
     const int VGA_WIDTH = 40; 
 
     while (1) {
-        unsigned char scancode;
-        
-        do {
-            scancode = kinb(0x60);
-        } while (scancode & 0x80);
-
+        unsigned char scancode = get_scancode();
+        if (scancode & 0x80) {
+            continue; 
+        }
         if (scancode == 0x1C) { // Enter (0x1C)
             break;
         }
@@ -421,11 +444,11 @@ int read_sectors(unsigned int lba, unsigned char count, unsigned char* buffer) {
 }
 int fat_read_bpb(void) {
     if (read_sectors(FAT12_LBA_OFFSET, 1, (unsigned char*)&g_bpb) != 0) {
-        kprint("BPB reading problem!", 0x4F00, vga + 881);
+        kprint("BPB reading problem!", 0x4F00, vga + 881+40);
         return -1;
     }
     if (g_bpb.BPB_BytesPerSec != 512) {
-        kprint("BPB unallowed size!", 0x4F00, vga + 881);
+        kprint("BPB unallowed size!", 0x4F00, vga + 881+40);
         return -1;
     }
     return 0;

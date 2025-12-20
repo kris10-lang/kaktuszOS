@@ -1,1 +1,1 @@
-qemu-system-i386 -drive file=./disk.img,format=raw
+sudo qemu-system-i386 -drive file=/dev/sda,format=raw
