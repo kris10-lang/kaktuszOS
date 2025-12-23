@@ -1,1 +1,4 @@
-sudo qemu-system-i386 -drive file=/dev/sda,format=raw
+qemu-system-i386 \
+  -machine pc \
+  -drive file=disk.img,format=raw,if=ide \
+  -boot c
