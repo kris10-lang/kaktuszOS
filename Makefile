@@ -15,3 +15,5 @@ git:
 	git add .
 	git commit -m "Update kaktuszOS code"
 	git push
+reconnect:
+	for host in /sys/class/scsi_host/host*/scan; do echo "- - -" | sudo tee $host; done
